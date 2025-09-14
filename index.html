@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #9face6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      color: #222;
+      overflow-x: hidden;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+      animation: fadeInDown 1s ease;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #111;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    p {
+      font-size: 16px;
+      color: #333;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      animation: fadeInUp 1.2s ease;
+    }
+
+    video, canvas {
+      border: 3px solid #222;
+      border-radius: 16px;
+      max-width: 90%;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    video:hover, canvas:hover {
+      transform: scale(1.03);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    }
+
+    button {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 28px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.35s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #ff4b2b, #ff416c);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📷 Cámara con control por voz</h1>
+    <p>Diga la palabra <strong>foto</strong> para tomar una captura.</p>
+  </header>
+
+  <main>
+    <video id="camara" autoplay playsinline></video>
+    <canvas id="lienzo"></canvas>
+    <button id="botonDescargar">Descargar foto</button>
+  </main>
+
+  <script>
+    const camara = document.getElementById('camara');
+    const lienzo = document.getElementById('lienzo');
+    const contexto = lienzo.getContext('2d');
+    const botonDescargar = document.getElementById('botonDescargar');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        camara.srcObject = stream;
+      })
+      .catch(error => {
+        alert("Error al acceder a la cámara: " + error);
+      });
+
+    const ReconocimientoVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const reconocimiento = new ReconocimientoVoz();
+    reconocimiento.lang = "es-ES";
+    reconocimiento.continuous = true;
+
+    reconocimiento.onresult = evento => {
+      const transcripcion = evento.results[evento.results.length - 1][0].transcript.trim().toLowerCase();
+      if (transcripcion.includes("foto")) {
+        tomarFoto();
+      }
+    };
+
+    reconocimiento.start();
+
+    function tomarFoto() {
+      lienzo.width = camara.videoWidth;
+      lienzo.height = camara.videoHeight;
+      contexto.drawImage(camara, 0, 0, lienzo.width, lienzo.height);
+    }
+
+    botonDescargar.addEventListener('click', () => {
+      const enlace = document.createElement('a');
+      enlace.download = "foto.png";
+      enlace.href = lienzo.toDataURL("image/png");
+      enlace.click();
+    });
+  </script>
+</body>
+</html>
